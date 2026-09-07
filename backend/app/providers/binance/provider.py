@@ -43,10 +43,10 @@ class BinanceMarketDataProvider(MarketDataProvider):
     ) -> Instrument:
         await self._ensure_registry()
 
-        nomalized_id = instrument_id.upper()
+        normalized_id = instrument_id.upper()
 
         try:
-            return self._instruments[nomalized_id]
+            return self._instruments[normalized_id]
         except KeyError as exc:
             raise ValueError(
                 f"Unknown Binance instrument: {instrument_id}"
