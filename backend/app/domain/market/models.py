@@ -56,8 +56,12 @@ class Quote(DomainModel):
     open_24h: Decimal | None = None
     high_24h: Decimal | None = None
     low_24h: Decimal | None = None
-    volume_24h: Decimal | None = None
-    change_24h: Decimal | None = None
+
+    price_change_24h: Decimal | None = None
+    change_percent_24h: Decimal | None = None
+
+    base_volume_24h: Decimal | None = None
+    quote_volume_24h: Decimal | None = None
 
     timestamp: datetime
     source: str
@@ -86,7 +90,11 @@ class Candle(DomainModel):
     high: Decimal
     low: Decimal
     close: Decimal
+
     volume: Decimal
+    quote_volume: Decimal | None = None
+
+    is_closed: bool
 
     source: str
 

@@ -4,29 +4,46 @@ from collections.abc import AsyncIterator, Sequence
 from .enums import CandleInterval
 from .models import Candle, Instrument, Quote, Trade
 
-class MarketDataProvider(ABC):
+class Provider(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """Unique provider name."""
+        """Unique provider identifier."""
         raise NotImplementedError
+class MarketDataProvider(Provider, ABC):
+    """
+    Request/response market data provider.
+
+    Examples:
+    - instruments
+    - lastest quote
+    - historical candles
+    """
 
     @abstractmethod
     async def get_instruments(self) -> Sequence[Instrument]:
         raise NotImplementedError
 
     @abstractmethod
-    async def get_quotes(self, instrument_id: str) -> Quote:
+    async def get_quote(
+        self,
+        instrument_id: str,
+    ) -> Quote:
         raise NotImplementedError
 
     @abstractmethod
     async def get_candles(
-        self, 
-        instrument_id: str, 
-        interval: CandleInterval, 
+        self,
+        instrument_id: str,
+        interval: CandleInterval,
         limit: int = 500,
     ) -> Sequence[Candle]:
         raise NotImplementedError
+
+class MarketStreamProvider(Provider, ABC):
+    """
+    Realtime streaming market data provider.
+    """
 
     @abstractmethod
     async def stream_quotes(
