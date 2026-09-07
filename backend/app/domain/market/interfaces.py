@@ -10,13 +10,14 @@ class Provider(ABC):
     def name(self) -> str:
         """Unique provider identifier."""
         raise NotImplementedError
+
 class MarketDataProvider(Provider, ABC):
     """
     Request/response market data provider.
 
     Examples:
     - instruments
-    - lastest quote
+    - latest quote
     - historical candles
     """
 

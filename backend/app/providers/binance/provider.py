@@ -10,7 +10,7 @@ from .client import BinanceClient
 from .mapper import BinanceMapper
 
 class BinanceMarketDataProvider(MarketDataProvider):
-    
+
     def __init__(self, client: BinanceClient | None = None) -> None:
         self._client = client or BinanceClient()
 
@@ -38,32 +38,19 @@ class BinanceMarketDataProvider(MarketDataProvider):
             return list(self._instruments.values())
 
     async def get_instrument(
-            self, 
+            self,
             instrument_id: str,
     ) -> Instrument:
         await self._ensure_registry()
 
         nomalized_id = instrument_id.upper()
+
         try:
             return self._instruments[nomalized_id]
         except KeyError as exc:
             raise ValueError(
                 f"Unknown Binance instrument: {instrument_id}"
             ) from exc
-
-    async def load_instruments(self) -> None:
-        exchange_info = await self._client.get_exchange_info()
-
-        self._instruments.clear()
-        self._symbols.clear()
-
-        for raw in exchange_info["symbols"]:
-            instrument = BinanceMapper.instrument(raw)
-
-            self._instruments[instrument.id] = instrument
-            self._symbols[instrument.id] = raw["symbol"]
-
-    
 
     async def get_quote(
         self,
@@ -96,7 +83,7 @@ class BinanceMarketDataProvider(MarketDataProvider):
 
         return [
             BinanceMapper.candle(
-                raw, 
+                raw,
                 instrument,
                 interval,
             )
@@ -118,5 +105,3 @@ class BinanceMarketDataProvider(MarketDataProvider):
     async def _ensure_registry(self) -> None:
         if not self._instruments:
             await self._load_registry()
-
-    

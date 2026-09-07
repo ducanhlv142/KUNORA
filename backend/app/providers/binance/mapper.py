@@ -38,7 +38,7 @@ class BinanceMapper:
 
         status = (
             MarketStatus.ACTIVE
-            if data["status"] == "TRADING"
+            if data.get("status") == "TRADING"
             else MarketStatus.UNKNOWN
         )
 
@@ -69,7 +69,7 @@ class BinanceMapper:
             base_volume_24h=Decimal(data["volume"]),
             quote_volume_24h=Decimal(data["quoteVolume"]),
             timestamp=datetime.fromtimestamp(
-                data["closeTime"] / 1000, 
+                data["closeTime"] / 1000,
                 tz=timezone.utc,
             ),
             source=cls.SOURCE,
@@ -78,12 +78,12 @@ class BinanceMapper:
     @classmethod
     def candle(
         cls,
-        data: dict[str, Any],
+        data: list[Any],
         instrument: Instrument,
         interval: CandleInterval,
     ) -> Candle:
         close_time = datetime.fromtimestamp(
-            data[6] / 1000, 
+            data[6] / 1000,
             tz=timezone.utc
         )
 
@@ -91,7 +91,7 @@ class BinanceMapper:
             instrument_id=instrument.id,
             interval=interval,
             open_time=datetime.fromtimestamp(
-                data[0] / 1000, 
+                data[0] / 1000,
                 tz=timezone.utc,
             ),
             close_time=close_time,
