@@ -6,9 +6,14 @@ from app.domain.market import (
     Quote,
 )
 
+from app.domain.market.exceptions import (
+    InstrumentNotFoundError,
+    MarketDataUnavailableError,
+)
+
 from .client import BinanceClient
 from .mapper import BinanceMapper
-
+from .exceptions import BinanceError
 class BinanceMarketDataProvider(MarketDataProvider):
 
     def __init__(self, client: BinanceClient | None = None) -> None:
@@ -48,8 +53,8 @@ class BinanceMarketDataProvider(MarketDataProvider):
         try:
             return self._instruments[normalized_id]
         except KeyError as exc:
-            raise ValueError(
-                f"Unknown Binance instrument: {instrument_id}"
+            raise InstrumentNotFoundError(
+                instrument_id
             ) from exc
 
     async def get_quote(
@@ -59,12 +64,20 @@ class BinanceMarketDataProvider(MarketDataProvider):
         instrument = await self.get_instrument(instrument_id)
         binance_symbol = self._symbols[instrument.id]
 
-        raw_quote = await self._client.get_ticker_24h(binance_symbol)
+        try:
+            raw_quote = await self._client.get_ticker_24h(
+                binance_symbol
+            )
+
+        except BinanceError as exc:
+                raise MarketDataUnavailableError() from exc
 
         return BinanceMapper.quote(
             raw_quote,
             instrument,
         )
+
+
 
     async def get_candles(
         self,
@@ -75,11 +88,14 @@ class BinanceMarketDataProvider(MarketDataProvider):
         instrument = await self.get_instrument(instrument_id)
         binance_symbol = self._symbols[instrument.id]
 
-        raw_candles = await self._client.get_klines(
-            symbol=binance_symbol,
-            interval=interval.value,
-            limit=limit,
-        )
+        try:
+            raw_candles = await self._client.get_klines(
+                symbol=binance_symbol,
+                interval=interval.value,
+                limit=limit,
+            )
+        except BinanceError as exc:
+                    raise MarketDataUnavailableError() from exc
 
         return [
             BinanceMapper.candle(
@@ -91,7 +107,10 @@ class BinanceMarketDataProvider(MarketDataProvider):
         ]
 
     async def _load_registry(self) -> None:
-        exchange_info = await self._client.get_exchange_info()
+        try:
+            exchange_info = await self._client.get_exchange_info()
+        except BinanceError as exc:
+            raise MarketDataUnavailableError() from exc
 
         self._instruments.clear()
         self._symbols.clear()

@@ -1,14 +1,24 @@
 from typing import Any
+from .exceptions import (
+    BinanceNetworkError,
+    BinanceRateLimitError,
+    BinanceResponseError,
+)
 
 import httpx
 
 class BinanceClient:
     BASE_URL = "https://data-api.binance.vision"
 
-    def __init__(self, timeout: float = 10.0) -> None:
+    def __init__(
+        self,
+        timeout: float = 10.0,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
         self._client = httpx.AsyncClient(
             base_url=self.BASE_URL,
             timeout=timeout,
+            transport=transport,
             headers={
                 "Accept": "application/json",
                 "User-Agent": "KUNORA/0.1",
@@ -29,9 +39,39 @@ class BinanceClient:
         path: str,
         params: dict[str, Any] | None = None,
     ) -> Any:
-        response = await self._client.get(path, params=params)
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = await self._client.get(
+                path,
+                params=params,
+            )
+
+            if response.status_code == 429:
+                raise BinanceRateLimitError(
+                    "Binance rate limit exceeded."
+                )
+            response.raise_for_status()
+
+        except httpx.TimeoutException as exc:
+            raise BinanceNetworkError(
+                "Binance request timed out."
+            ) from exc
+
+        except httpx.NetworkError as exc:
+            raise BinanceNetworkError(
+                "Unable to connect to Binance."
+            ) from exc
+
+        except httpx.HTTPStatusError as exc:
+            raise BinanceResponseError(
+                f"Binance returned HTTP {exc.response.status_code}."
+            ) from exc
+
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise BinanceResponseError(
+                "Binance returned an invalid JSON response."
+            ) from exc
 
     async def get_exchange_info(
         self,
