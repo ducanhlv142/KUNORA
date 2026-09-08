@@ -40,3 +40,48 @@ export async function getQuote(
 
   return response.json();
 }
+
+export interface Candle {
+  instrument_id: string;
+  interval: string;
+
+  open_time: string;
+  close_time: string;
+
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+
+  volume: string;
+  quote_volume: string | null;
+
+  is_closed: boolean;
+  source: string;
+}
+
+export async function getCandles(
+  instrumentId: string,
+  interval = "1h",
+  limit = 200,
+): Promise<Candle[]> {
+  const params = new URLSearchParams({
+    interval,
+    limit: String(limit),
+  });
+
+  const response = await fetch(
+    `${API_URL}/api/v1/market/candles/${instrumentId}?${params}`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Kunora API returned ${response.status}`,
+    );
+  }
+
+  return response.json();
+}

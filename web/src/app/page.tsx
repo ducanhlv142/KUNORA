@@ -1,7 +1,14 @@
-import { getQuote } from "@/lib/api/market";
+import { CandlestickChart } from "@/components/market/CandlestickChart";
+import {
+  getCandles,
+  getQuote,
+} from "@/lib/api/market";
 
 export default async function Home() {
-  const quote = await getQuote("BTC-USDT");
+  const [quote, candles] = await Promise.all([
+    getQuote("BTC-USDT"),
+    getCandles("BTC-USDT", "1h", 200),
+  ]);
 
   const price = Number(quote.last);
   const change = Number(quote.change_percent_24h ?? 0);
@@ -46,6 +53,9 @@ export default async function Home() {
             label="24H VOLUME"
             value={quote.base_volume_24h}
           />
+        </div>
+        <div className="mt-10">
+          <CandlestickChart candles={candles} />
         </div>
       </div>
     </main>
