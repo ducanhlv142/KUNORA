@@ -22,7 +22,10 @@ class MarketDataProvider(Provider, ABC):
     """
 
     @abstractmethod
-    async def get_instruments(self) -> Sequence[Instrument]:
+    async def get_instruments(
+        self,
+        instrument_id: str,
+    ) -> Instrument:
         raise NotImplementedError
 
     @abstractmethod
