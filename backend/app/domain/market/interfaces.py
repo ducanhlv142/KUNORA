@@ -58,13 +58,21 @@ class MarketStreamProvider(Provider, ABC):
     @abstractmethod
     async def stream_quotes(
         self,
-        instrument_ids: Sequence[str]
+        instrument_ids: Sequence[str],
     ) -> AsyncIterator[Quote]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def stream_candles(
+        self,
+        instrument_ids: Sequence[str],
+        interval: CandleInterval,
+    ) -> AsyncIterator[Candle]:
         raise NotImplementedError
 
     @abstractmethod
     async def stream_trades(
         self,
-        instrument_ids: Sequence[str]
+        instrument_ids: Sequence[str],
     ) -> AsyncIterator[Trade]:
         raise NotImplementedError

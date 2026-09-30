@@ -6,7 +6,10 @@ from .enums import (
     TradeSide,
 )
 
-from .interfaces import MarketDataProvider
+from .interfaces import (
+    MarketDataProvider,
+    MarketStreamProvider,
+)
 from .models import (
     Asset,
     Candle,
@@ -25,9 +28,11 @@ __all__ = [
     "Instrument",
     "InstrumentType",
     "MarketDataProvider",
+    "MarketStreamProvider",
     "MarketStatus",
     "OrderBook",
     "OrderBookLevel",
     "Quote",
+    "Trade",
     "TradeSide",
 ]
