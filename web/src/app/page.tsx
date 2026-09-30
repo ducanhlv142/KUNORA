@@ -111,9 +111,12 @@ export default async function Home({
           <MarketControls
             instrument={instrument}
             interval={interval}
-          />
+          />       
         </div>
-
+        <LiveQuotePanel
+          initialQuote={quote}
+          instrumentId={instrument}
+        />
         <div className="mt-10">
           <CandlestickChart
             candles={candles}
