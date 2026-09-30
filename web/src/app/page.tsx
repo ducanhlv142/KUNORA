@@ -1,8 +1,14 @@
 import { CandlestickChart } from "@/components/market/CandlestickChart";
 import { MarketControls } from "@/components/market/MarketControls";
+import { MarketUnavailable } from "@/components/market/MarketUnavailable";
+
 import {
   getCandles,
   getQuote,
+} from "@/lib/api/market";
+import type {
+  Candle,
+  Quote,
 } from "@/lib/api/market";
 import {
   formatPercent,
@@ -79,14 +85,21 @@ export default async function Home({
     params.interval,
   );
 
-  const [quote, candles] = await Promise.all([
-    getQuote(instrument),
-    getCandles(
-      instrument,
-      interval,
-      200,
-    ),
-  ]);
+  let quote: Quote;
+  let candles: Candle[];
+
+  try {
+    [quote, candles] = await Promise.all([
+      getQuote(instrument),
+      getCandles(
+        instrument,
+        interval,
+        200,
+      ),
+    ]);
+  } catch {
+    return <MarketUnavailable />;
+  }
 
   const change = Number(
     quote.change_percent_24h ?? 0,
