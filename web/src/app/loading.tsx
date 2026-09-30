@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-black p-10 text-white">
+    <main className="p-6 md:p-10">
       <div className="mx-auto max-w-6xl animate-pulse">
         <div className="flex items-start justify-between gap-6">
           <div>

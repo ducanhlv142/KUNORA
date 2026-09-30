@@ -7,27 +7,10 @@ import {
 } from "next/navigation";
 import { useTransition } from "react";
 
-
-const INSTRUMENTS = [
-  {
-    id: "BTC-USDT",
-    label: "BTC / USDT",
-  },
-  {
-    id: "ETH-USDT",
-    label: "ETH / USDT",
-  },
-] as const;
-
-const INTERVALS = [
-  "1m",
-  "5m",
-  "15m",
-  "1h",
-  "4h",
-  "1d",
-] as const;
-
+import {
+  MARKET_INSTRUMENTS,
+  MARKET_INTERVALS,
+} from "@/lib/market/config";
 
 interface MarketControlsProps {
   instrument: string;
@@ -80,7 +63,7 @@ export function MarketControls({
         disabled={isPending}
         className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 outline-none"
       >
-        {INSTRUMENTS.map((item) => (
+        {MARKET_INSTRUMENTS.map((item) => (
           <option
             key={item.id}
             value={item.id}
@@ -91,7 +74,7 @@ export function MarketControls({
       </select>
 
       <div className="flex gap-1">
-        {INTERVALS.map((item) => {
+        {MARKET_INTERVALS.map((item) => {
           const active = item === interval;
 
           return (

@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { ReactNode } from "react";
+import {
+  Geist,
+  Geist_Mono,
+} from "next/font/google";
+
+import { AppHeader } from "@/components/shell/AppHeader";
+import { AppSidebar } from "@/components/shell/AppSidebar";
+
 import "./globals.css";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,18 +21,40 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "Kunora",
-  description: "Market Intelligence Platform",
+
+export const metadata: Metadata = {
+  title: {
+    default: "Kunora",
+    template: "%s | Kunora",
+  },
+  description:
+    "Provider-independent financial market intelligence platform.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="bg-black text-white antialiased">
+        <div className="flex min-h-screen flex-col bg-black">
+          <AppHeader />
+
+          <div className="flex flex-1">
+            <AppSidebar />
+
+            <div className="min-w-0 flex-1">
+              {children}
+            </div>
+          </div>
+        </div>
+      </body>
     </html>
   );
 }

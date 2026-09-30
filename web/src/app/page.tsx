@@ -15,22 +15,14 @@ import {
   formatPrice,
   formatVolume,
 } from "@/lib/format/market";
-
-
-const SUPPORTED_INSTRUMENTS = [
-  "BTC-USDT",
-  "ETH-USDT",
-] as const;
-
-const SUPPORTED_INTERVALS = [
-  "1m",
-  "5m",
-  "15m",
-  "1h",
-  "4h",
-  "1d",
-] as const;
-
+import {
+  DEFAULT_INSTRUMENT,
+  DEFAULT_INTERVAL,
+  MARKET_INSTRUMENTS,
+  MARKET_INTERVALS,
+  type MarketInstrumentId,
+  type MarketInterval,
+} from "@/lib/market/config";
 
 type SearchParams = {
   instrument?: string;
@@ -40,35 +32,34 @@ type SearchParams = {
 
 function resolveInstrument(
   value: string | undefined,
-): string {
+): MarketInstrumentId {
   if (
     value &&
-    SUPPORTED_INSTRUMENTS.includes(
-      value as (typeof SUPPORTED_INSTRUMENTS)[number],
+    MARKET_INSTRUMENTS.some(
+      (instrument) =>
+        instrument.id === value,
     )
   ) {
-    return value;
+    return value as MarketInstrumentId;
   }
 
-  return "BTC-USDT";
+  return DEFAULT_INSTRUMENT;
 }
-
 
 function resolveInterval(
   value: string | undefined,
-): string {
+): MarketInterval {
   if (
     value &&
-    SUPPORTED_INTERVALS.includes(
-      value as (typeof SUPPORTED_INTERVALS)[number],
+    MARKET_INTERVALS.includes(
+      value as MarketInterval,
     )
   ) {
-    return value;
+    return value as MarketInterval;
   }
 
-  return "1h";
+  return DEFAULT_INTERVAL;
 }
-
 
 export default async function Home({
   searchParams,
@@ -111,7 +102,7 @@ export default async function Home({
   );
 
   return (
-    <main className="min-h-screen bg-black p-10 text-white">
+    <main className="p-6 md:p-10">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>

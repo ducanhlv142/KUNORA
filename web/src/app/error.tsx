@@ -48,7 +48,7 @@ export default function ErrorPage({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-black p-10 text-white">
+    <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-6">
       <div className="w-full max-w-lg rounded-2xl border border-zinc-800 p-8">
         <p className="text-sm text-zinc-500">
           KUNORA / MARKET
