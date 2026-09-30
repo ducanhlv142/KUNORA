@@ -10,14 +10,35 @@ from app.providers.binance.provider import (
 )
 from app.services.market_data import MarketDataService
 
+from app.providers.binance.stream_provider import (
+    BinanceCandleStreamProvider,
+)
+from app.services.market_stream import (
+    MarketStreamService,
+)
+
 @asynccontextmanager
 async def lifespan(
     app: FastAPI,
 ) -> AsyncIterator[None]:
     provider = BinanceMarketDataProvider()
 
-    app.state.market_data_service = MarketDataService(
-        provider
+    stream_provider = (
+        BinanceCandleStreamProvider(
+            market_data_provider=provider,
+        )
+    )
+
+    app.state.market_data_service = (
+        MarketDataService(
+            provider
+        )
+    )
+
+    app.state.market_stream_service = (
+        MarketStreamService(
+            stream_provider
+        )
     )
 
     try:

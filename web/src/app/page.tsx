@@ -168,6 +168,8 @@ export default async function Home({
         <div className="mt-10">
           <CandlestickChart
             candles={candles}
+            instrumentId={instrument}
+            interval={interval}
           />
         </div>
       </div>
