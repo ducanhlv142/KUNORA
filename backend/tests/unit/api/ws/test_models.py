@@ -51,3 +51,24 @@ def test_unknown_fields_are_rejected() -> None:
             instrument_id="BTC-USDT",
             something_random=True,
         )
+
+def test_valid_quote_subscription() -> None:
+    command = SubscriptionCommand(
+        type="subscribe",
+        channel="quotes",
+        instrument_id="btc-usdt",
+    )
+
+    assert command.type == (
+        SubscriptionAction.SUBSCRIBE
+    )
+
+    assert command.channel == (
+        StreamChannel.QUOTES
+    )
+
+    assert command.instrument_id == (
+        "BTC-USDT"
+    )
+
+    assert command.interval is None
