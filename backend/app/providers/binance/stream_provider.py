@@ -7,10 +7,28 @@ from app.domain.market import (
     CandleStreamProvider,
     Instrument,
     MarketDataProvider,
+    Quote,
+    QuoteStreamProvider,
 )
 
 from .stream_client import BinanceStreamClient
 from .stream_mapper import BinanceStreamMapper
+
+
+def _binance_symbol(
+    instrument: Instrument,
+) -> str:
+    quote_asset = instrument.quote_asset
+
+    if quote_asset is None:
+        raise ValueError(
+            "Instrument requires a quote asset."
+        )
+
+    return (
+        f"{instrument.base_asset.symbol}"
+        f"{quote_asset.symbol}"
+    )
 
 
 class BinanceCandleStreamProvider(
@@ -33,22 +51,6 @@ class BinanceCandleStreamProvider(
     @property
     def name(self) -> str:
         return "binance"
-
-    @staticmethod
-    def _symbol(
-        instrument: Instrument,
-    ) -> str:
-        quote_asset = instrument.quote_asset
-
-        if quote_asset is None:
-            raise ValueError(
-                "Instrument requires a quote asset."
-            )
-
-        return (
-            f"{instrument.base_asset.symbol}"
-            f"{quote_asset.symbol}"
-        )
 
     async def stream_candles(
         self,
@@ -75,7 +77,7 @@ class BinanceCandleStreamProvider(
                 )
             )
 
-            symbol = self._symbol(
+            symbol = _binance_symbol(
                 instrument
             ).upper()
 
@@ -96,7 +98,10 @@ class BinanceCandleStreamProvider(
             async for payload in messages:
                 data = payload.get("data")
 
-                if not isinstance(data, dict):
+                if not isinstance(
+                    data,
+                    dict,
+                ):
                     continue
 
                 if data.get("e") != "kline":
@@ -104,7 +109,10 @@ class BinanceCandleStreamProvider(
 
                 symbol = data.get("s")
 
-                if not isinstance(symbol, str):
+                if not isinstance(
+                    symbol,
+                    str,
+                ):
                     continue
 
                 instrument = (
@@ -116,12 +124,114 @@ class BinanceCandleStreamProvider(
                 if instrument is None:
                     continue
 
-                candle = BinanceStreamMapper.candle(
-                    data,
-                    instrument,
+                candle = (
+                    BinanceStreamMapper.candle(
+                        data,
+                        instrument,
+                    )
                 )
 
                 if candle.interval != interval:
                     continue
 
                 yield candle
+
+
+class BinanceQuoteStreamProvider(
+    QuoteStreamProvider
+):
+    def __init__(
+        self,
+        market_data_provider: MarketDataProvider,
+        client: BinanceStreamClient | None = None,
+    ) -> None:
+        self._market_data_provider = (
+            market_data_provider
+        )
+
+        self._client = (
+            client
+            or BinanceStreamClient()
+        )
+
+    @property
+    def name(self) -> str:
+        return "binance"
+
+    async def stream_quotes(
+        self,
+        instrument_ids: Sequence[str],
+    ) -> AsyncIterator[Quote]:
+        if not instrument_ids:
+            raise ValueError(
+                "At least one instrument is required."
+            )
+
+        instruments_by_symbol: dict[
+            str,
+            Instrument,
+        ] = {}
+
+        streams: list[str] = []
+
+        for instrument_id in instrument_ids:
+            instrument = (
+                await self._market_data_provider
+                .get_instrument(
+                    instrument_id
+                )
+            )
+
+            symbol = _binance_symbol(
+                instrument
+            ).upper()
+
+            instruments_by_symbol[
+                symbol
+            ] = instrument
+
+            streams.append(
+                self._client.ticker_stream(
+                    symbol
+                )
+            )
+
+        async with aclosing(
+            self._client.stream(streams)
+        ) as messages:
+            async for payload in messages:
+                data = payload.get("data")
+
+                if not isinstance(
+                    data,
+                    dict,
+                ):
+                    continue
+
+                if (
+                    data.get("e")
+                    != "24hrTicker"
+                ):
+                    continue
+
+                symbol = data.get("s")
+
+                if not isinstance(
+                    symbol,
+                    str,
+                ):
+                    continue
+
+                instrument = (
+                    instruments_by_symbol.get(
+                        symbol.upper()
+                    )
+                )
+
+                if instrument is None:
+                    continue
+
+                yield BinanceStreamMapper.quote(
+                    data,
+                    instrument,
+                )

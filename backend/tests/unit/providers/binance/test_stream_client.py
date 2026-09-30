@@ -86,3 +86,13 @@ def test_decode_non_object_payload_is_rejected() -> None:
         BinanceStreamClient.decode_message(
             '["unexpected"]'
         )
+
+def test_ticker_stream_name() -> None:
+    stream = (
+        BinanceStreamClient.ticker_stream(
+            "BTCUSDT"
+        )
+    )
+
+    assert stream == "btcusdt@ticker"
+

@@ -90,3 +90,54 @@ def test_stream_candle_preserves_closed_state() -> None:
     )
 
     assert candle.is_closed is True
+
+def test_stream_quote_maps_binance_ticker_event() -> None:
+    instrument = make_instrument()
+
+    event = {
+        "e": "24hrTicker",
+        "E": 1704067250000,
+        "s": "BTCUSDT",
+
+        "p": "100.50",
+        "P": "0.240",
+
+        "c": "42100.40",
+
+        "b": "42100.30",
+        "a": "42100.50",
+
+        "o": "42000.00",
+        "h": "42500.00",
+        "l": "41800.00",
+
+        "v": "1234.5678",
+        "q": "52000000.12",
+    }
+
+    quote = BinanceStreamMapper.quote(
+        event,
+        instrument,
+    )
+
+    assert quote.instrument_id == (
+        "BTC-USDT"
+    )
+
+    assert quote.bid == Decimal(
+        "42100.30"
+    )
+
+    assert quote.ask == Decimal(
+        "42100.50"
+    )
+
+    assert quote.last == Decimal(
+        "42100.40"
+    )
+
+    assert quote.change_percent_24h == (
+        Decimal("0.240")
+    )
+
+    assert quote.source == "binance"

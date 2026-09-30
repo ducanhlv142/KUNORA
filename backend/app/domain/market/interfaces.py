@@ -63,10 +63,9 @@ class CandleStreamProvider(Provider, ABC):
     ) -> AsyncIterator[Candle]:
         raise NotImplementedError
 
-
-class MarketStreamProvider(CandleStreamProvider, ABC):
+class QuoteStreamProvider(Provider, ABC):
     """
-    Full realtime market streaming provider.
+    Realtime quote streaming provider.
     """
 
     @abstractmethod
@@ -75,6 +74,15 @@ class MarketStreamProvider(CandleStreamProvider, ABC):
         instrument_ids: Sequence[str],
     ) -> AsyncIterator[Quote]:
         raise NotImplementedError
+
+class MarketStreamProvider(
+    CandleStreamProvider,
+    QuoteStreamProvider,
+    ABC,
+):
+    """
+    Full realtime market streaming provider.
+    """
 
     @abstractmethod
     async def stream_trades(

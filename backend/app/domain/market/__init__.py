@@ -10,6 +10,7 @@ from .interfaces import (
     CandleStreamProvider,
     MarketDataProvider,
     MarketStreamProvider,
+    QuoteStreamProvider,
 )
 from .models import (
     Asset,
@@ -27,7 +28,6 @@ __all__ = [
     "Candle",
     "CandleInterval",
     "CandleStreamProvider",
-    "MarketStreamProvider",
     "Instrument",
     "InstrumentType",
     "MarketDataProvider",
@@ -36,6 +36,7 @@ __all__ = [
     "OrderBook",
     "OrderBookLevel",
     "Quote",
+    "QuoteStreamProvider",
     "Trade",
     "TradeSide",
 ]

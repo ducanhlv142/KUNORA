@@ -12,6 +12,7 @@ from app.providers.binance.provider import (
 )
 from app.providers.binance.stream_provider import (
     BinanceCandleStreamProvider,
+    BinanceQuoteStreamProvider,
 )
 
 
@@ -63,6 +64,14 @@ class FakeStreamClient:
 
         for message in self.messages:
             yield message
+
+    @staticmethod
+    def ticker_stream(
+        symbol: str,
+    ) -> str:
+        return (
+            f"{symbol.lower()}@ticker"
+        )
 
 
 @pytest.mark.asyncio
@@ -155,3 +164,94 @@ async def test_stream_provider_requires_instrument() -> None:
         match="At least one instrument",
     ):
         await anext(candles)
+
+@pytest.mark.asyncio
+async def test_quote_stream_provider_maps_live_quote() -> None:
+    market_provider = (
+        BinanceMarketDataProvider(
+            client=FakeRegistryClient()
+        )
+    )
+
+    message = {
+        "stream": "btcusdt@ticker",
+        "data": {
+            "e": "24hrTicker",
+            "E": 1704067250000,
+            "s": "BTCUSDT",
+
+            "p": "100.50",
+            "P": "0.240",
+
+            "c": "42100.40",
+
+            "b": "42100.30",
+            "a": "42100.50",
+
+            "o": "42000.00",
+            "h": "42500.00",
+            "l": "41800.00",
+
+            "v": "1234.5678",
+            "q": "52000000.12",
+        },
+    }
+
+    stream_client = FakeStreamClient(
+        [message]
+    )
+
+    provider = BinanceQuoteStreamProvider(
+        market_data_provider=market_provider,
+        client=stream_client,
+    )
+
+    quotes = provider.stream_quotes(
+        ["BTC-USDT"]
+    )
+
+    quote = await anext(quotes)
+
+    await quotes.aclose()
+
+    assert quote.instrument_id == (
+        "BTC-USDT"
+    )
+
+    assert quote.last == Decimal(
+        "42100.40"
+    )
+
+    assert quote.bid == Decimal(
+        "42100.30"
+    )
+
+    assert quote.ask == Decimal(
+        "42100.50"
+    )
+
+    assert stream_client.requested_streams == [
+        "btcusdt@ticker"
+    ]
+
+
+@pytest.mark.asyncio
+async def test_quote_stream_provider_requires_instrument() -> None:
+    market_provider = (
+        BinanceMarketDataProvider(
+            client=FakeRegistryClient()
+        )
+    )
+
+    provider = BinanceQuoteStreamProvider(
+        market_data_provider=market_provider,
+        client=FakeStreamClient([]),
+    )
+
+    quotes = provider.stream_quotes([])
+
+    with pytest.raises(
+        ValueError,
+        match="At least one instrument",
+    ):
+        await anext(quotes)

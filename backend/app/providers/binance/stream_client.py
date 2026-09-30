@@ -34,6 +34,15 @@ class BinanceStreamClient:
             f"{symbol.strip().lower()}"
             f"@kline_{interval}"
         )
+    
+    @staticmethod
+    def ticker_stream(
+        symbol: str,
+    ) -> str:
+        return (
+            f"{symbol.strip().lower()}"
+            "@ticker"
+        )
 
     @classmethod
     def build_uri(
