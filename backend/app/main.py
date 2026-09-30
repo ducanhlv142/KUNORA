@@ -12,6 +12,7 @@ from app.services.market_data import MarketDataService
 
 from app.providers.binance.stream_provider import (
     BinanceCandleStreamProvider,
+    BinanceQuoteStreamProvider,
 )
 from app.services.market_stream import (
     MarketStreamService,
@@ -23,8 +24,14 @@ async def lifespan(
 ) -> AsyncIterator[None]:
     provider = BinanceMarketDataProvider()
 
-    stream_provider = (
+    candle_stream_provider = (
         BinanceCandleStreamProvider(
+            market_data_provider=provider,
+        )
+    )
+
+    quote_stream_provider = (
+        BinanceQuoteStreamProvider(
             market_data_provider=provider,
         )
     )
@@ -37,7 +44,12 @@ async def lifespan(
 
     app.state.market_stream_service = (
         MarketStreamService(
-            stream_provider
+            candle_provider=(
+                candle_stream_provider
+            ),
+            quote_provider=(
+                quote_stream_provider
+            ),
         )
     )
 
