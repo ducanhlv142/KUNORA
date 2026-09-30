@@ -50,17 +50,10 @@ class MarketDataProvider(Provider, ABC):
     ) -> Sequence[Candle]:
         raise NotImplementedError
 
-class MarketStreamProvider(Provider, ABC):
+class CandleStreamProvider(Provider, ABC):
     """
-    Realtime streaming market data provider.
+    Realtime candle streaming provider.
     """
-
-    @abstractmethod
-    async def stream_quotes(
-        self,
-        instrument_ids: Sequence[str],
-    ) -> AsyncIterator[Quote]:
-        raise NotImplementedError
 
     @abstractmethod
     async def stream_candles(
@@ -68,6 +61,19 @@ class MarketStreamProvider(Provider, ABC):
         instrument_ids: Sequence[str],
         interval: CandleInterval,
     ) -> AsyncIterator[Candle]:
+        raise NotImplementedError
+
+
+class MarketStreamProvider(CandleStreamProvider, ABC):
+    """
+    Full realtime market streaming provider.
+    """
+
+    @abstractmethod
+    async def stream_quotes(
+        self,
+        instrument_ids: Sequence[str],
+    ) -> AsyncIterator[Quote]:
         raise NotImplementedError
 
     @abstractmethod

@@ -7,6 +7,7 @@ from .enums import (
 )
 
 from .interfaces import (
+    CandleStreamProvider,
     MarketDataProvider,
     MarketStreamProvider,
 )
@@ -25,6 +26,8 @@ __all__ = [
     "AssetClass",
     "Candle",
     "CandleInterval",
+    "CandleStreamProvider",
+    "MarketStreamProvider",
     "Instrument",
     "InstrumentType",
     "MarketDataProvider",
