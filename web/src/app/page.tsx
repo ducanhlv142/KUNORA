@@ -1,6 +1,7 @@
 import { CandlestickChart } from "@/components/market/CandlestickChart";
 import { MarketControls } from "@/components/market/MarketControls";
 import { MarketUnavailable } from "@/components/market/MarketUnavailable";
+import { LiveQuotePanel } from "@/components/market/LiveQuotePanel";
 
 import {
   getCandles,
@@ -10,11 +11,7 @@ import type {
   Candle,
   Quote,
 } from "@/lib/api/market";
-import {
-  formatPercent,
-  formatPrice,
-  formatVolume,
-} from "@/lib/format/market";
+
 import {
   DEFAULT_INSTRUMENT,
   DEFAULT_INTERVAL,
@@ -92,10 +89,6 @@ export default async function Home({
     return <MarketUnavailable />;
   }
 
-  const change = Number(
-    quote.change_percent_24h ?? 0,
-  );
-
   const instrumentLabel = instrument.replace(
     "-",
     " / ",
@@ -122,50 +115,6 @@ export default async function Home({
         </div>
 
         <div className="mt-10">
-          <p className="text-5xl font-semibold tracking-tight">
-            {formatPrice(quote.last)}
-          </p>
-
-          <p
-            className={[
-              "mt-3 text-lg font-medium",
-              change > 0
-                ? "text-emerald-500"
-                : change < 0
-                  ? "text-red-500"
-                  : "text-zinc-400",
-            ].join(" ")}
-          >
-            {formatPercent(
-              quote.change_percent_24h,
-            )}
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
-          <MarketStat
-            label="24H HIGH"
-            value={formatPrice(
-              quote.high_24h,
-            )}
-          />
-
-          <MarketStat
-            label="24H LOW"
-            value={formatPrice(
-              quote.low_24h,
-            )}
-          />
-
-          <MarketStat
-            label="24H VOLUME"
-            value={`${formatVolume(
-              quote.base_volume_24h,
-            )} ${instrument.split("-")[0]}`}
-          />
-        </div>
-
-        <div className="mt-10">
           <CandlestickChart
             candles={candles}
             instrumentId={instrument}
@@ -174,26 +123,5 @@ export default async function Home({
         </div>
       </div>
     </main>
-  );
-}
-
-
-function MarketStat({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-xl border border-zinc-800 p-5">
-      <p className="text-xs text-zinc-500">
-        {label}
-      </p>
-
-      <p className="mt-2 text-xl font-medium">
-        {value}
-      </p>
-    </div>
   );
 }
