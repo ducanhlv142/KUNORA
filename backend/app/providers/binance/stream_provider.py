@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator, Sequence
+from contextlib import aclosing
 
 from app.domain.market import (
     Candle,
@@ -89,39 +90,38 @@ class BinanceCandleStreamProvider(
                 )
             )
 
-        async for payload in self._client.stream(
-            streams
-        ):
-            data = payload.get("data")
+        async with aclosing(
+            self._client.stream(streams)
+        ) as messages:
+            async for payload in messages:
+                data = payload.get("data")
 
-            if not isinstance(data, dict):
-                continue
+                if not isinstance(data, dict):
+                    continue
 
-            if data.get("e") != "kline":
-                continue
+                if data.get("e") != "kline":
+                    continue
 
-            symbol = data.get("s")
+                symbol = data.get("s")
 
-            if not isinstance(symbol, str):
-                continue
+                if not isinstance(symbol, str):
+                    continue
 
-            instrument = (
-                instruments_by_symbol.get(
-                    symbol.upper()
+                instrument = (
+                    instruments_by_symbol.get(
+                        symbol.upper()
+                    )
                 )
-            )
 
-            if instrument is None:
-                continue
+                if instrument is None:
+                    continue
 
-            candle = BinanceStreamMapper.candle(
-                data,
-                instrument,
-            )
+                candle = BinanceStreamMapper.candle(
+                    data,
+                    instrument,
+                )
 
-            # Defensive check in case the upstream
-            # stream doesn't match our subscription.
-            if candle.interval != interval:
-                continue
+                if candle.interval != interval:
+                    continue
 
-            yield candle
+                yield candle
