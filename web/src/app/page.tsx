@@ -1,73 +1,183 @@
 import { CandlestickChart } from "@/components/market/CandlestickChart";
+import { MarketControls } from "@/components/market/MarketControls";
 import {
   getCandles,
   getQuote,
 } from "@/lib/api/market";
+import {
+  formatPercent,
+  formatPrice,
+  formatVolume,
+} from "@/lib/format/market";
 
-export default async function Home() {
+
+const SUPPORTED_INSTRUMENTS = [
+  "BTC-USDT",
+  "ETH-USDT",
+] as const;
+
+const SUPPORTED_INTERVALS = [
+  "1m",
+  "5m",
+  "15m",
+  "1h",
+  "4h",
+  "1d",
+] as const;
+
+
+type SearchParams = {
+  instrument?: string;
+  interval?: string;
+};
+
+
+function resolveInstrument(
+  value: string | undefined,
+): string {
+  if (
+    value &&
+    SUPPORTED_INSTRUMENTS.includes(
+      value as (typeof SUPPORTED_INSTRUMENTS)[number],
+    )
+  ) {
+    return value;
+  }
+
+  return "BTC-USDT";
+}
+
+
+function resolveInterval(
+  value: string | undefined,
+): string {
+  if (
+    value &&
+    SUPPORTED_INTERVALS.includes(
+      value as (typeof SUPPORTED_INTERVALS)[number],
+    )
+  ) {
+    return value;
+  }
+
+  return "1h";
+}
+
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+
+  const instrument = resolveInstrument(
+    params.instrument,
+  );
+
+  const interval = resolveInterval(
+    params.interval,
+  );
+
   const [quote, candles] = await Promise.all([
-    getQuote("BTC-USDT"),
-    getCandles("BTC-USDT", "1h", 200),
+    getQuote(instrument),
+    getCandles(
+      instrument,
+      interval,
+      200,
+    ),
   ]);
 
-  const price = Number(quote.last);
-  const change = Number(quote.change_percent_24h ?? 0);
+  const change = Number(
+    quote.change_percent_24h ?? 0,
+  );
+
+  const instrumentLabel = instrument.replace(
+    "-",
+    " / ",
+  );
 
   return (
     <main className="min-h-screen bg-black p-10 text-white">
       <div className="mx-auto max-w-6xl">
-        <p className="text-sm text-zinc-500">
-          KUNORA / MARKET
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div>
+            <p className="text-sm text-zinc-500">
+              KUNORA / MARKET
+            </p>
 
-        <h1 className="mt-2 text-4xl font-semibold">
-          BTC / USDT
-        </h1>
+            <h1 className="mt-2 text-4xl font-semibold">
+              {instrumentLabel}
+            </h1>
+          </div>
+
+          <MarketControls
+            instrument={instrument}
+            interval={interval}
+          />
+        </div>
 
         <div className="mt-10">
           <p className="text-5xl font-semibold tracking-tight">
-            {price.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {formatPrice(quote.last)}
           </p>
 
-          <p className="mt-3 text-lg">
-            {change >= 0 ? "+" : ""}
-            {change.toFixed(3)}%
+          <p
+            className={[
+              "mt-3 text-lg font-medium",
+              change > 0
+                ? "text-emerald-500"
+                : change < 0
+                  ? "text-red-500"
+                  : "text-zinc-400",
+            ].join(" ")}
+          >
+            {formatPercent(
+              quote.change_percent_24h,
+            )}
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-3 gap-4">
+        <div className="mt-12 grid gap-4 md:grid-cols-3">
           <MarketStat
             label="24H HIGH"
-            value={quote.high_24h}
+            value={formatPrice(
+              quote.high_24h,
+            )}
           />
 
           <MarketStat
             label="24H LOW"
-            value={quote.low_24h}
+            value={formatPrice(
+              quote.low_24h,
+            )}
           />
 
           <MarketStat
             label="24H VOLUME"
-            value={quote.base_volume_24h}
+            value={`${formatVolume(
+              quote.base_volume_24h,
+            )} ${instrument.split("-")[0]}`}
           />
         </div>
+
         <div className="mt-10">
-          <CandlestickChart candles={candles} />
+          <CandlestickChart
+            candles={candles}
+          />
         </div>
       </div>
     </main>
   );
 }
 
+
 function MarketStat({
   label,
   value,
 }: {
   label: string;
-  value: string | null;
+  value: string;
 }) {
   return (
     <div className="rounded-xl border border-zinc-800 p-5">
@@ -75,8 +185,8 @@ function MarketStat({
         {label}
       </p>
 
-      <p className="mt-2 text-xl">
-        {value ?? "—"}
+      <p className="mt-2 text-xl font-medium">
+        {value}
       </p>
     </div>
   );
