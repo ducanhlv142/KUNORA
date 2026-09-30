@@ -24,6 +24,12 @@ class MarketDataProvider(Provider, ABC):
     @abstractmethod
     async def get_instruments(
         self,
+    ) -> Sequence[Instrument]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_instrument(
+        self,
         instrument_id: str,
     ) -> Instrument:
         raise NotImplementedError
