@@ -53,22 +53,38 @@ export function useCandleStream({
     let disposed = false;
 
     const clearReconnectTimer = () => {
-      if (reconnectTimer !== null) {
-        clearTimeout(reconnectTimer);
-        reconnectTimer = null;
+      if (reconnectTimer === null) {
+        return;
       }
+
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
     };
 
-    const subscribe = (
-      websocket: WebSocket,
-    ) => {
-      websocket.send(
-        JSON.stringify({
-          type: "subscribe",
-          channel: "candles",
-          instrument_id: instrumentId,
-          interval,
-        }),
+    const scheduleReconnect = () => {
+      if (disposed) {
+        return;
+      }
+
+      clearReconnectTimer();
+
+      if (!navigator.onLine) {
+        setStatus("offline");
+        return;
+      }
+
+      setStatus("reconnecting");
+
+      const delay = Math.min(
+        1000 * 2 ** reconnectAttempt,
+        10_000,
+      );
+
+      reconnectAttempt += 1;
+
+      reconnectTimer = setTimeout(
+        connect,
+        delay,
       );
     };
 
@@ -90,22 +106,43 @@ export function useCandleStream({
           : "reconnecting",
       );
 
-      socket = new WebSocket(WS_URL);
+      const websocket =
+        new WebSocket(WS_URL);
 
-      socket.addEventListener(
+      socket = websocket;
+
+      websocket.addEventListener(
         "open",
         () => {
-          if (disposed || !socket) {
+          if (
+            disposed ||
+            socket !== websocket
+          ) {
+            websocket.close();
             return;
           }
 
-          subscribe(socket);
+          websocket.send(
+            JSON.stringify({
+              type: "subscribe",
+              channel: "candles",
+              instrument_id: instrumentId,
+              interval,
+            }),
+          );
         },
       );
 
-      socket.addEventListener(
+      websocket.addEventListener(
         "message",
         (event) => {
+          if (
+            disposed ||
+            socket !== websocket
+          ) {
+            return;
+          }
+
           try {
             const message = JSON.parse(
               event.data,
@@ -145,45 +182,28 @@ export function useCandleStream({
               );
             }
           } catch {
-            // Ignore malformed WebSocket messages.
+            // Ignore malformed messages.
           }
         },
       );
 
-      socket.addEventListener(
+      websocket.addEventListener(
         "error",
         () => {
-          socket?.close();
+          websocket.close();
         },
       );
 
-      socket.addEventListener(
+      websocket.addEventListener(
         "close",
         () => {
+          if (socket !== websocket) {
+            return;
+          }
+
           socket = null;
 
-          if (disposed) {
-            return;
-          }
-
-          if (!navigator.onLine) {
-            setStatus("offline");
-            return;
-          }
-
-          setStatus("reconnecting");
-
-          const delay = Math.min(
-            1000 * 2 ** reconnectAttempt,
-            10_000,
-          );
-
-          reconnectAttempt += 1;
-
-          reconnectTimer = setTimeout(
-            connect,
-            delay,
-          );
+          scheduleReconnect();
         },
       );
     };
@@ -193,13 +213,20 @@ export function useCandleStream({
 
       setStatus("offline");
 
-      socket?.close();
+      const currentSocket = socket;
+      socket = null;
+
+      currentSocket?.close();
     };
 
     const handleOnline = () => {
       reconnectAttempt = 0;
+      clearReconnectTimer();
 
-      socket?.close();
+      const currentSocket = socket;
+      socket = null;
+
+      currentSocket?.close();
 
       connect();
     };
@@ -231,10 +258,14 @@ export function useCandleStream({
         handleOnline,
       );
 
+      const currentSocket = socket;
+      socket = null;
+
       if (
-        socket?.readyState === WebSocket.OPEN
+        currentSocket?.readyState ===
+        WebSocket.OPEN
       ) {
-        socket.send(
+        currentSocket.send(
           JSON.stringify({
             type: "unsubscribe",
             channel: "candles",
@@ -244,7 +275,7 @@ export function useCandleStream({
         );
       }
 
-      socket?.close();
+      currentSocket?.close();
     };
   }, [
     instrumentId,
